@@ -16,6 +16,7 @@ from litex.build.io import CRG
 
 from litex_boards.platforms import tinyfpga_bx
 
+from litex.build.generic_platform import Subsignal, IOStandard, Pins
 from litex.soc.cores.spi_flash import SpiFlash
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.soc import SoCRegion
@@ -25,12 +26,25 @@ from litex.soc.cores.led import LedChaser
 kB = 1024
 mB = 1024*kB
 
+# Comment out to use default pins (tx=GPIO:0 (A2), rx=GPIO:1 (A1))
+# tinyfpga_bx.serial = [
+#     (
+#         "serial", 0,
+#         Subsignal("tx", Pins("C2")),
+#         Subsignal("rx", Pins("B1")),
+#         IOStandard("LVCMOS33")
+#     ),
+# ]
+
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
     mem_map = {**SoCCore.mem_map, **{"spiflash": 0x80000000}}
     def __init__(self, bios_flash_offset, sys_clk_freq=int(16e6), **kwargs):
         platform = tinyfpga_bx.Platform()
+
+        # We need at least a serial port peripheral
+        platform.add_extension(tinyfpga_bx.serial)
 
         # Disable Integrated ROM since too large for iCE40.
         kwargs["integrated_rom_size"]  = 0
